@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Concert Grand Piano | Virtual Studio</title>
+  <!-- Load Tailwind CSS for responsive layout & studio console chrome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Inter, JetBrains Mono & Playfair Display fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =========================================================================
+       CUSTOM CONCERT GRAND PIANO STYLING & 3D KEY MECHANICS
+       ========================================================================= */
+    :root {
+      --white-key-w: 46px;
+      --black-key-w: 28px;
+      --black-key-h: 62%;
+      --gold-accent: #d4af37;
+      --gold-bright: #f3d06b;
+      --felt-crimson: #7f1d1d;
+      --ebony-cabinet: #0c0d10;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #08090c;
+      font-family: 'Inter', sans-serif;
+      color: #f1f5f9;
+    }
+
+    .font-serif-grand {
+      font-family: 'Playfair Display', serif;
+    }
+
+    .font-mono-studio {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Concert Grand Lacquered Ebony & Brushed Gold Trim */
+    .grand-cabinet {
+      background: linear-gradient(180deg, #171920 0%, #0e1015 55%, #090a0d 100%);
+      border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+    }
+
+    .gold-trim-line {
+      height: 2px;
+      background: linear-gradient(90deg,
+        rgba(212, 175, 55, 0.15) 0%,
+        rgba(243, 208, 107, 0.85) 25%,
+        rgba(212, 175, 55, 0.95) 50%,
+        rgba(243, 208, 107, 0.85) 75%,
+        rgba(212, 175, 55, 0.15) 100%
+      );
+    }
+
+    /* Studio OLED Screen Styling */
+    .oled-screen {
+      background: radial-gradient(ellipse at top, #101d24 0%, #060a0d 100%);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      box-shadow:
+        inset 0 2px 12px rgba(0, 0, 0, 0.85),
+        0 0 18px rgba(14, 165, 233, 0.1);
+    }
+
+    .oled-glow-cyan {
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.55);
+    }
+
+    .oled-glow-gold {
+      text-shadow: 0 0 12px rgba(243, 208, 107, 0.55);
+    }
+
+    /* Console Buttons & Toggle Pills */
+    .studio-btn {
+      transition: all 0.12s ease;
+      cursor: pointer;
+    }
+    .studio-btn:active {
+      transform: translateY(1px);
+    }
+
+    .toggle-active {
+      background: linear-gradient(180deg, rgba(212, 175, 55, 0.25) 0%, rgba(161, 128, 32, 0.18) 100%);
+      border-color: rgba(243, 208, 107, 0.75) !important;
+      color: #fef08a !important;
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.22);
+    }
+
+    .sustain-active {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.28) 0%, rgba(5, 150, 105, 0.2) 100%);
+      border-color: rgba(52, 211, 153, 0.8) !important;
+      color: #6ee7b7 !important;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.28);
+    }
+
+    /* =========================================================================
+       88-KEY MINI-MAP / OCTAVE NAVIGATOR
+       ========================================================================= */
+    .minimap-track {
+      position: relative;
+      height: 34px;
+      background: #0a0b0f;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .minimap-white {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: #cbd5e1;
+      border-right: 1px solid #475569;
+      transition: background-color 0.06s ease;
+    }
+
+    .minimap-white.is-middle-c {
+      background: #fde68a;
+    }
+
+    .minimap-white.is-active {
+      background: #38bdf8 !important;
+      box-shadow: 0 0 8px #38bdf8;
+    }
+
+    .minimap-black {
+      position: absolute;
+      top: 0;
+      height: 58%;
+      background: #0f172a;
+      border: 1px solid #020617;
+      border-radius: 0 0 2px 2px;
+      z-index: 2;
+      transition: background-color 0.06s ease;
+    }
+
+    .minimap-black.is-active {
+      background: #f59e0b !important;
+      box-shadow: 0 0 8px #f59e0b;
+    }
+
+    .minimap-viewport {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border: 2px solid var(--gold-bright);
+      background: rgba(243, 208, 107, 0.16);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.35), inset 0 0 8px rgba(243, 208, 107, 0.2);
+      border-radius: 5px;
+      z-index: 5;
+      cursor: grab;
+    }
+
+    .minimap-viewport:active {
+      cursor: grabbing;
+      background: rgba(243, 208, 107, 0.24);
+    }
+
+    /* =========================================================================
+       CRIMSON FELT KEYBED STRIP & SCROLLABLE 88-KEY TRACK
+       ========================================================================= */
+    .red-felt-strip {
+      height: 11px;
+      background: linear-gradient(180deg, #450a0a 0%, #991b1b 45%, #7f1d1d 80%, #3b0707 100%);
+      box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.75),
+        0 2px 6px rgba(0, 0, 0, 0.65);
+      border-bottom: 1px solid rgba(254, 202, 202, 0.14);
+      z-index: 15;
+    }
+
+    #piano-scroll-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background: #060709;
+      scrollbar-width: thin;
+      scrollbar-color: #d4af37 #11131a;
+    }
+
+    #piano-scroll-container::-webkit-scrollbar {
+      height: 10px;
+    }
+    #piano-scroll-container::-webkit-scrollbar-track {
+      background: #0d0f14;
+      border-top: 1px solid rgba(212, 175, 55, 0.2);
+    }
+    #piano-scroll-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, #927420, #d4af37, #927420);
+      border-radius: 999px;
+      border: 2px solid #0d0f14;
+    }
+
+    #piano-keys-track {
+      position: relative;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* =========================================================================
+       REALISTIC IVORY (WHITE) KEYS
+       ========================================================================= */
+    .white-key {
+      position: absolute;
+      top: 0;
+      bottom: 4px;
+      width: var(--white-key-w);
+      background: linear-gradient(180deg,
+        #e2e4e9 0%,
+        #f8f9fa 6%,
+        #ffffff 45%,
+        #f4f5f7 88%,
+        #d8dce3 96%,
+        #b8bec9 100%
+      );
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #94a3b8;
+      border-bottom: 5px solid #94a3b8;
+      border-radius: 0 0 7px 7px;
+      box-shadow:
+        inset 0 4px 6px rgba(0, 0, 0, 0.18),
+        inset 0 -2px 3px rgba(255, 255, 255, 0.9),
+        0 3px 5px rgba(0, 0, 0, 0.55);
+      transform-origin: top center;
+      transition: transform 0.045s cubic-bezier(0.2, 0.9, 0.3, 1), background 0.05s ease, box-shadow 0.05s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 10px;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .white-key:hover {
+      background: linear-gradient(180deg,
+        #e6e9ef 0%,
+        #ffffff 8%,
+        #ffffff 55%,
+        #f1f5f9 92%,
+        #cbd5e1 100%
+      );
+    }
+
+    .white-key.is-active {
+      transform: perspective(700px) rotateX(-2.2deg) translateY(3px);
+      background: linear-gradient(180deg,
+        #cbd5e1 0%,
+        #e0f2fe 15%,
+        #bae6fd 70%,
+        #7dd3fc 95%,
+        #38bdf8 100%
+      );
+      border-bottom-width: 2px;
+      border-bottom-color: #0284c7;
+      box-shadow:
+        inset 0 5px 10px rgba(2, 132, 199, 0.35),
+        0 1px 2px rgba(0, 0, 0, 0.75);
+    }
+
+    .white-key.is-sustained:not(.is-active) {
+      background: linear-gradient(180deg,
+        #e2e8f0 0%,
+        #f0f9ff 20%,
+        #e0f2fe 85%,
+        #bae6fd 100%
+      );
+    }
+
+    /* Middle C (C4) Gold Medallion Accent */
+    .white-key.is-middle-c {
+      border-bottom-color: #b48a1e;
+    }
+
+    .middle-c-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 35% 35%, #fef08a, #d4af37 65%, #854d0e 100%);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.85);
+      margin-bottom: 5px;
+      pointer-events: none;
+    }
+
+    /* =========================================================================
+       REALISTIC EBONY (BLACK) KEYS
+       ========================================================================= */
+    .black-key {
+      position: absolute;
+      top: 0;
+      width: var(--black-key-w);
+      height: var(--black-key-h);
+      background: linear-gradient(180deg,
+        #1e2028 0%,
+        #2b2e38 8%,
+        #14161c 65%,
+        #090a0d 92%,
+        #262932 100%
+      );
+      border-left: 2px solid #333742;
+      border-right: 2px solid #090a0d;
+      border-bottom: 8px solid #050608;
+      border-radius: 0 0 5px 5px;
+      box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.16),
+        inset 0 -3px 4px rgba(255, 255, 255, 0.08),
+        -2px 5px 8px rgba(0, 0, 0, 0.65),
+        2px 5px 8px rgba(0, 0, 0, 0.65);
+      transform-origin: top center;
+      transition: transform 0.045s cubic-bezier(0.2, 0.9, 0.3, 1), background 0.05s ease, box-shadow 0.05s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 8px;
+      z-index: 4;
+      cursor: pointer;
+    }
+
+    /* Subtle beveled top gloss on ebony key */
+    .black-key::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 3px;
+      right: 3px;
+      bottom: 12px;
+      border-radius: 0 0 3px 3px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.01) 100%);
+      pointer-events: none;
+    }
+
+    .black-key.is-active {
+      transform: perspective(600px) rotateX(-3deg) translateY(3px);
+      background: linear-gradient(180deg,
+        #292524 0%,
+        #78350f 35%,
+        #d97706 85%,
+        #f59e0b 100%
+      );
+      border-bottom-width: 3px;
+      border-bottom-color: #92400e;
+      box-shadow:
+        inset 0 2px 6px rgba(254, 243, 199, 0.35),
+        0 2px 4px rgba(0, 0, 0, 0.85);
+    }
+
+    .black-key.is-sustained:not(.is-active) {
+      background: linear-gradient(180deg,
+        #1e2028 0%,
+        #451a03 60%,
+        #92400e 100%
+      );
+    }
+
+    /* Key Labels & QWERTY Keycap Badges */
+    .note-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      pointer-events: none;
+      line-height: 1.1;
+    }
+
+    .white-key .note-label {
+      color: #475569;
+    }
+    .white-key.is-active .note-label {
+      color: #0c4a6e;
+      font-weight: 700;
+    }
+
+    .black-key .note-label {
+      color: #94a3b8;
+      font-size: 8.5px;
+    }
+    .black-key.is-active .note-label {
+      color: #fef3c7;
+    }
+
+    .qwerty-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-bottom: 4px;
+      pointer-events: none;
+      line-height: 1.15;
+    }
+
+    .white-key .qwerty-badge {
+      background: #e2e8f0;
+      color: #1e293b;
+      border: 1px solid #94a3b8;
+      box-shadow: 0 1px 0 #94a3b8;
+    }
+
+    .black-key .qwerty-badge {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid #64748b;
+      box-shadow: 0 1px 0 #0f172a;
+      font-size: 8px;
+      padding: 1px 3px;
+    }
+
+    .hide-note-labels .note-label {
+      display: none;
+    }
+
+    .hide-qwerty-labels .qwerty-badge {
+      display: none;
+    }
+
+    /* Custom Range Slider */
+    input[type="range"].studio-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #1e293b;
+      height: 5px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"].studio-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #fef08a, #d4af37);
+      border: 1px solid #78350f;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.65);
+    }
+  </style>
+</head>
+<body class="flex flex-col w-full h-full overflow-hidden select-none">
+
+  <!-- ==================== TOP STUDIO CONSOLE & OLED DISPLAY ==================== -->
+  <header class="grand-cabinet shrink-0 z-20 px-3 py-2 sm:px-5 sm:py-2.5">
+    <div class="max-w-[1800px] mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
+
+      <!-- Left: Concert Grand Branding + Studio OLED Display -->
+      <div class="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-start gap-3 sm:gap-4">
+        <!-- Brand Emblem -->
+        <div class="flex items-center gap-2.5 shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#292212] to-[#12100a] border border-[#d4af37]/60 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+            <svg class="w-5 h-5 text-[#f3d06b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M4 19h16a1 1 0 001-1v-4c0-3.5-3-4-5-6-1.5-1.5-2-4-5.5-4C6.5 4 4 6.8 4 11v7a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 14h17M8 14v5M12 14v5M16 14v5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-serif-grand text-base sm:text-lg font-bold tracking-wide text-[#f8fafc] leading-none">
+                 <span class="text-[#f3d06b]">PIANO</span>
+              </h1>
+              <span class="font-mono-studio text-[9px] px-1.5 py-0.5 rounded bg-[#d4af37]/15 text-[#f3d06b] border border-[#d4af37]/40 uppercase">Grand</span>
+            </div>
+            <p class="text-[10px] text-slate-400 tracking-wider uppercase mt-0.5">A0 (27.5 Hz) — C8 (4186 Hz)</p>
+          </div>
+        </div>
+
+        <!-- Studio OLED Display (Notes, Hz, Real-time Chord Recognition) -->
+        <div class="oled-screen flex-1 sm:flex-initial sm:min-w-[330px] md:min-w-[390px] rounded-xl px-3.5 py-1.5 flex items-center justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 text-[9px] font-mono-studio uppercase tracking-widest text-sky-400/75">
+              <span>CHORD / HARMONY</span>
+              <span id="oled-voice-tag" class="text-amber-300/80">• CONCERT GRAND</span>
+            </div>
+            <div id="oled-chord" class="font-mono-studio text-sm sm:text-base font-bold text-[#f3d06b] oled-glow-gold truncate">
+              Ready — Play Any Key
+            </div>
+            <div id="oled-notes" class="font-mono-studio text-[11px] text-sky-300 oled-glow-cyan truncate">
+              88 Keys Active (52 White · 36 Black)
+            </div>
+          </div>
+
+          <div class="text-right shrink-0 pl-2 border-l border-sky-500/20">
+            <div class="text-[9px] font-mono-studio uppercase tracking-wider text-slate-400">PITCH</div>
+            <div id="oled-freq" class="font-mono-studio text-xs sm:text-sm font-bold text-emerald-300">
+              440.00 Hz
+            </div>
+            <div id="oled-velocity" class="font-mono-studio text-[10px] text-slate-400">
+              VEL: —
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Sound Voices, Sustain, Toggles, Octave Shift, Volume & Demo Player -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+
+        <!-- 4 Sound Voices Selector -->
+        <div class="flex items-center bg-[#0a0b0e] border border-slate-700/70 rounded-lg px-2 py-1">
+          <label for="voice-select" class="text-[10px] uppercase tracking-wider text-slate-400 mr-1.5 hidden sm:inline">Voice</label>
+          <select id="voice-select" aria-label="Sound Voice"
+            class="bg-transparent text-xs font-semibold text-amber-200 focus:outline-none cursor-pointer">
+            <option value="concert" class="bg-[#12141c] text-slate-100">Concert Grand</option>
+            <option value="epiano" class="bg-[#12141c] text-slate-100">Warm Electric Piano</option>
+            <option value="upright" class="bg-[#12141c] text-slate-100">Bright Upright</option>
+            <option value="pad" class="bg-[#12141c] text-slate-100">Dreamy Synth Pad</option>
+          </select>
+        </div>
+
+        <!-- Sustain Pedal Button (Also Spacebar) -->
+        <button id="btn-sustain" type="button" title="Toggle Sustain Pedal (or hold Spacebar)"
+          class="studio-btn px-2.5 py-1.5 rounded-lg bg-[#12141c] border border-slate-700/80 text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-slate-500" id="sustain-led"></span>
+          <span>Sustain</span>
+          <span class="hidden md:inline font-mono-studio text-[9px] text-slate-400">[SPACE]</span>
+        </button>
+
+        <!-- Note Labels Toggle -->
+        <button id="btn-toggle-notes" type="button" title="Show/Hide Note Names (C4, F#4)"
+          class="studio-btn toggle-active px-2.5 py-1.5 rounded-lg bg-[#12141c] border border-slate-700/80 text-xs font-semibold text-slate-300">
+          Notes
+        </button>
+
+        <!-- QWERTY Key Hints Toggle -->
+        <button id="btn-toggle-qwerty" type="button" title="Show/Hide Computer Keyboard Keycaps"
+          class="studio-btn toggle-active px-2.5 py-1.5 rounded-lg bg-[#12141c] border border-slate-700/80 text-xs font-semibold text-slate-300">
+          Keys
+        </button>
+
+        <!-- QWERTY Octave Shift (- / +) -->
+        <div class="flex items-center bg-[#12141c] border border-slate-700/80 rounded-lg overflow-hidden" title="Shift QWERTY Octave (Z / X)">
+          <button id="btn-oct-down" type="button" class="studio-btn px-2 py-1.5 text-xs font-mono-studio font-bold text-slate-300 hover:bg-slate-800">Z−</button>
+          <span id="qwerty-oct-label" class="px-1.5 text-[11px] font-mono-studio font-bold text-[#f3d06b]">C4–F5</span>
+          <button id="btn-oct-up" type="button" class="studio-btn px-2 py-1.5 text-xs font-mono-studio font-bold text-slate-300 hover:bg-slate-800">X+</button>
+        </div>
+
+        <!-- Master Volume -->
+        <div class="hidden sm:flex items-center gap-1.5 bg-[#12141c] border border-slate-700/80 rounded-lg px-2.5 py-1.5" title="Master Volume">
+          <svg class="w-3.5 h-3.5 text-[#f3d06b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input id="volume-slider" type="range" min="0" max="100" value="82" aria-label="Master Volume" class="studio-slider w-16 md:w-20" />
+        </div>
+
+        <!-- Built-in Demo Song Player -->
+        <div class="flex items-center gap-1 bg-[#12141c] border border-[#d4af37]/40 rounded-lg p-1">
+          <select id="song-select" aria-label="Select Demo Piece"
+            class="bg-transparent text-xs font-medium text-slate-200 pl-1.5 pr-1 focus:outline-none cursor-pointer max-w-[135px] sm:max-w-[165px]">
+            <option value="furElise" class="bg-[#12141c]">Für Elise (Beethoven)</option>
+            <option value="moonlight" class="bg-[#12141c]">Moonlight Sonata</option>
+            <option value="odeToJoy" class="bg-[#12141c]">Ode to Joy (2-Hand)</option>
+            <option value="chromatic88" class="bg-[#12141c]">88-Key Sweep (A0→C8)</option>
+          </select>
+          <button id="btn-demo-play" type="button"
+            class="studio-btn px-2.5 py-1 rounded-md bg-gradient-to-r from-[#d4af37] to-[#b48a1e] text-[#090a0d] text-xs font-bold flex items-center gap-1 shadow">
+            <span id="demo-btn-icon">▶</span>
+            <span id="demo-btn-text">Play</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== 88-KEY MINI-MAP & OCTAVE NAVIGATOR ==================== -->
+    <div class="max-w-[1800px] mx-auto mt-2 flex items-center gap-2">
+      <!-- Quick Register Jump Buttons -->
+      <div class="flex items-center gap-1 shrink-0">
+        <button id="jump-bass" type="button" title="Jump to Sub-Bass A0"
+          class="studio-btn px-2 py-1 rounded bg-[#141720] hover:bg-[#1e2330] border border-slate-700/80 font-mono-studio text-[10px] font-semibold text-slate-300">
+          Bass A0
+        </button>
+        <button id="jump-mid" type="button" title="Center on Middle C4"
+          class="studio-btn px-2 py-1 rounded bg-[#231d10] hover:bg-[#332a16] border border-[#d4af37]/50 font-mono-studio text-[10px] font-bold text-[#f3d06b]">
+          Middle C4
+        </button>
+        <button id="jump-treble" type="button" title="Jump to Sparkling Treble C8"
+          class="studio-btn px-2 py-1 rounded bg-[#141720] hover:bg-[#1e2330] border border-slate-700/80 font-mono-studio text-[10px] font-semibold text-slate-300">
+          Treble C8
+        </button>
+      </div>
+
+      <!-- Interactive 88-Key Mini-Map Bar -->
+      <div id="minimap-track" class="minimap-track flex-1" title="Click or drag viewport to navigate all 88 keys">
+        <div id="minimap-viewport" class="minimap-viewport"></div>
+      </div>
+
+      <!-- Key Width Zoom Controls -->
+      <div class="hidden sm:flex items-center gap-1 shrink-0 bg-[#12141c] border border-slate-700/80 rounded px-1.5 py-0.5" title="Adjust Key Width">
+        <button id="btn-zoom-out" type="button" class="studio-btn px-1.5 text-xs font-mono-studio font-bold text-slate-300 hover:text-white">−</button>
+        <span class="text-[9px] font-mono-studio uppercase text-slate-400">Size</span>
+        <button id="btn-zoom-in" type="button" class="studio-btn px-1.5 text-xs font-mono-studio font-bold text-slate-300 hover:text-white">+</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Concert Grand Gold Trim & Crimson Felt Keybed Strip -->
+  <div class="gold-trim-line shrink-0"></div>
+  <div class="red-felt-strip shrink-0"></div>
+
+  <!-- ==================== FULL 88-KEY SCROLLABLE KEYBOARD ==================== -->
+  <main id="piano-scroll-container" aria-label="88-Key Concert Grand Piano Keyboard">
+    <div id="piano-keys-track"></div>
+  </main>
+
+  <!-- ==================== AUDIO ENGINE, CHORD ANALYZER & UI LOGIC ==================== -->
+  <script>
+    (() => {
+      'use strict';
+
+      /**
+       * =========================================================================
+       * 1. 88-KEY PIANO DATA GENERATION (MIDI 21 A0 to MIDI 108 C8)
+       * =========================================================================
+       */
+      const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      const BLACK_SEMITONES = new Set([1, 3, 6, 8, 10]);
+
+      // Subtle ergonomic horizontal offset for black keys (as fraction of white key width)
+      const BLACK_OFFSET_RATIO = {
+        1: -0.04, // C# slightly left of C/D seam
+        3:  0.04, // D# slightly right of D/E seam
+        6: -0.05, // F# slightly left of F/G seam
+        8:  0.00, // G# centered on G/A seam
+        10: 0.05  // A# slightly right of A/B seam
+      };
+
+      const PIANO_KEYS = [];
+      const KEY_BY_MIDI = new Map();
+      let whiteKeyCounter = 0;
+
+      for (let midi = 21; midi <= 108; midi++) {
+        const semitone = midi % 12;
+        const octave = Math.floor(midi / 12) - 1;
+        const noteName = NOTE_NAMES[semitone];
+        const fullName = `${noteName}${octave}`;
+        const isBlack = BLACK_SEMITONES.has(semitone);
+        const freq = 440 * Math.pow(2, (midi - 69) / 12);
+
+        const keyObj = {
+          midi,
+          semitone,
+          octave,
+          noteName,
+          fullName,
+          isBlack,
+          freq,
+          isMiddleC: midi === 60,
+          whiteIndex: isBlack ? whiteKeyCounter - 1 : whiteKeyCounter,
+          blackOffset: isBlack ? (BLACK_OFFSET_RATIO[semitone] || 0) : 0,
+          el: null,
+          miniEl: null,
+          qwertyEl: null
+        };
+
+        if (!isBlack) {
+          whiteKeyCounter++;
+        }
+
+        PIANO_KEYS.push(keyObj);
+        KEY_BY_MIDI.set(midi, keyObj);
+      }
+
+      const TOTAL_WHITE_KEYS = whiteKeyCounter; // 52 white keys (36 black keys = 88 total)
+
+      /**
+       * =========================================================================
+       * 2. MULTI-HARMONIC WEB AUDIO API CONCERT GRAND SYNTHESIZER
+       * =========================================================================
+       */
+      class ConcertGrandSynth {
+        constructor() {
+          this.ctx = null;
+          this.masterGain = null;
+          this.compressor = null;
+          this.reverbNode = null;
+          this.reverbGain = null;
+          this.dryGain = null;
+          this.volume = 0.82;
+          this.voiceType = 'concert'; // 'concert' | 'epiano' | 'upright' | 'pad'
+          this.activeVoices = new Map(); // midi -> voice controller
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioCtx();
+
+            // Dynamics Compressor prevents clipping on dense sustained chords
+            this.compressor = this.ctx.createDynamicsCompressor();
+            this.compressor.threshold.setValueAtTime(-14, this.ctx.currentTime);
+            this.compressor.knee.setValueAtTime(18, this.ctx.currentTime);
+            this.compressor.ratio.setValueAtTime(4, this.ctx.currentTime);
+            this.compressor.attack.setValueAtTime(0.004, this.ctx.currentTime);
+            this.compressor.release.setValueAtTime(0.18, this.ctx.currentTime);
+
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+
+            this.dryGain = this.ctx.createGain();
+            this.dryGain.gain.setValueAtTime(0.84, this.ctx.currentTime);
+
+            this.reverbGain = this.ctx.createGain();
+            this.reverbGain.gain.setValueAtTime(0.26, this.ctx.currentTime);
+
+            // Procedural Stereo Concert-Hall Impulse Response
+            this.reverbNode = this.ctx.createConvolver();
+            this.reverbNode.buffer = this._createHallImpulse(2.1, 2.6);
+
+            // Signal Routing: Voices -> Dry & Reverb -> Compressor -> Master -> Out
+            this.dryGain.connect(this.compressor);
+            this.reverbNode.connect(this.reverbGain);
+            this.reverbGain.connect(this.compressor);
+            this.compressor.connect(this.masterGain);
+            this.masterGain.connect(this.ctx.destination);
+          }
+
+          if (this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+        }
+
+        _createHallImpulse(durationSec, decayRate) {
+          const rate = this.ctx.sampleRate;
+          const length = Math.floor(rate * durationSec);
+          const impulse = this.ctx.createBuffer(2, length, rate);
+
+          for (let ch = 0; ch < 2; ch++) {
+            const data = impulse.getChannelData(ch);
+            for (let i = 0; i < length; i++) {
+              const t = i / rate;
+              // Early reflections + smooth concert hall tail
+              const env = Math.pow(1 - i / length, decayRate);
+              const noise = (Math.random() * 2 - 1);
+              // Gentle high-frequency damping over time
+              const hfDamp = Math.exp(-t * 1.4);
+              data[i] = noise * env * (0.45 + 0.55 * hfDamp);
+            }
+          }
+          return impulse;
+        }
+
+        setVolume(val) {
+          this.volume = Math.max(0, Math.min(1, val));
+          if (this.masterGain && this.ctx) {
+            this.masterGain.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.02);
+          }
+        }
+
+        setVoice(voiceType) {
+          this.voiceType = voiceType;
+          if (!this.ctx || !this.reverbGain) return;
+          const wet = voiceType === 'pad' ? 0.42 : voiceType === 'epiano' ? 0.30 : 0.24;
+          this.reverbGain.gain.setTargetAtTime(wet, this.ctx.currentTime, 0.05);
+        }
+
+        noteOn(midi, velocity = 0.8) {
+          this.init();
+          const key = KEY_BY_MIDI.get(midi);
+          if (!key) return;
+
+          // If this note is already sounding, smoothly damp the old strike first
+          if (this.activeVoices.has(midi)) {
+            this._stopVoice(midi, 0.045);
+          }
+
+          const now = this.ctx.currentTime;
+          const freq = key.freq;
+          const vel = Math.max(0.18, Math.min(1.0, velocity));
+
+          // Register factor: 0.0 at A0 (21) -> 1.0 at C8 (108)
+          const reg = (midi - 21) / 87;
+
+          // Stereo panner: bass strings on left (-0.36), treble on right (+0.36)
+          const panner = this.ctx.createStereoPanner();
+          panner.pan.setValueAtTime((reg - 0.5) * 0.72, now);
+
+          // Dynamic Lowpass Brightness Filter scaled by velocity & register
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+
+          const voiceGain = this.ctx.createGain();
+          const oscNodes = [];
+
+          // Natural string decay time: deep bass rings longer, top treble decays fast
+          const naturalDecay = 7.2 * Math.pow(1 - reg * 0.78, 1.35) + 0.9;
+
+          if (this.voiceType === 'concert') {
+            // --- CONCERT GRAND PIANO ---
+            const baseCutoff = Math.min(14000, freq * (2.4 + vel * 6.8));
+            filter.frequency.setValueAtTime(baseCutoff, now);
+            filter.frequency.exponentialRampToValueAtTime(Math.max(180, freq * 1.45), now + naturalDecay * 0.75);
+            filter.Q.setValueAtTime(0.85, now);
+
+            const peakAmp = (0.24 + vel * 0.28) * (1.15 - reg * 0.32);
+            voiceGain.gain.setValueAtTime(0.0001, now);
+            voiceGain.gain.linearRampToValueAtTime(peakAmp, now + 0.006);
+            voiceGain.gain.exponentialRampToValueAtTime(peakAmp * 0.42, now + 0.28);
+            voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + naturalDecay);
+
+            // Partial 1: Fundamental
+            const o1 = this.ctx.createOscillator();
+            const g1 = this.ctx.createGain();
+            o1.type = 'triangle';
+            o1.frequency.setValueAtTime(freq, now);
+            g1.gain.setValueAtTime(0.72, now);
+            o1.connect(g1).connect(filter);
+            oscNodes.push(o1);
+
+            // Partial 2: Unison/2nd Harmonic string chorus (+1.8 cents)
+            const o2 = this.ctx.createOscillator();
+            const g2 = this.ctx.createGain();
+            o2.type = 'sine';
+            o2.frequency.setValueAtTime(freq * 2, now);
+            o2.detune.setValueAtTime(1.8, now);
+            g2.gain.setValueAtTime(0.32 * (1 - reg * 0.45), now);
+            o2.connect(g2).connect(filter);
+            oscNodes.push(o2);
+
+            // Partial 3: 3rd Harmonic shimmer (stronger in bass/mid, softer in high treble)
+            if (midi < 96) {
+              const o3 = this.ctx.createOscillator();
+              const g3 = this.ctx.createGain();
+              o3.type = 'sine';
+              o3.frequency.setValueAtTime(freq * 3, now);
+              o3.detune.setValueAtTime(-2.2, now);
+              g3.gain.setValueAtTime((0.12 + vel * 0.1) * (1 - reg * 0.7), now);
+              o3.connect(g3).connect(filter);
+              oscNodes.push(o3);
+            }
+
+            // Sub-octave warmth for deep bass & tenor strings
+            if (midi < 62) {
+              const oSub = this.ctx.createOscillator();
+              const gSub = this.ctx.createGain();
+              oSub.type = 'sine';
+              oSub.frequency.setValueAtTime(freq * 0.5, now);
+              gSub.gain.setValueAtTime(0.18 * (1 - midi / 62), now);
+              oSub.connect(gSub).connect(filter);
+              oscNodes.push(oSub);
+            }
+
+            // Percussive Hammer-Felt Attack Transient
+            this._triggerHammerTransient(filter, freq, vel, now);
+
+          } else if (this.voiceType === 'epiano') {
+            // --- WARM ELECTRIC PIANO (Tine & Bell) ---
+            const baseCutoff = Math.min(9500, freq * (2.2 + vel * 5.2));
+            filter.frequency.setValueAtTime(baseCutoff, now);
+            filter.frequency.exponentialRampToValueAtTime(Math.max(220, freq * 1.6), now + 2.4);
+            filter.Q.setValueAtTime(1.1, now);
+
+            const epDecay = 4.6 * (1 - reg * 0.55) + 1.1;
+            const peakAmp = 0.22 + vel * 0.24;
+            voiceGain.gain.setValueAtTime(0.0001, now);
+            voiceGain.gain.linearRampToValueAtTime(peakAmp, now + 0.008);
+            voiceGain.gain.exponentialRampToValueAtTime(peakAmp * 0.55, now + 0.35);
+            voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + epDecay);
+
+            // Stereo chorused sine pair
+            [-4.5, 4.5].forEach((cents) => {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, now);
+              osc.detune.setValueAtTime(cents, now);
+              g.gain.setValueAtTime(0.45, now);
+              osc.connect(g).connect(filter);
+              oscNodes.push(osc);
+            });
+
+            // Bell tine transient (7th harmonic quick ping)
+            if (midi < 92) {
+              const tine = this.ctx.createOscillator();
+              const tineGain = this.ctx.createGain();
+              tine.type = 'sine';
+              tine.frequency.setValueAtTime(freq * 7, now);
+              tineGain.gain.setValueAtTime(0.08 * vel, now);
+              tineGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+              tine.connect(tineGain).connect(filter);
+              oscNodes.push(tine);
+            }
+
+          } else if (this.voiceType === 'upright') {
+            // --- BRIGHT STUDIO UPRIGHT ---
+            const baseCutoff = Math.min(15000, freq * (3.2 + vel * 7.5));
+            filter.frequency.setValueAtTime(baseCutoff, now);
+            filter.frequency.exponentialRampToValueAtTime(Math.max(260, freq * 1.9), now + naturalDecay * 0.6);
+            filter.Q.setValueAtTime(1.4, now);
+
+            const upDecay = naturalDecay * 0.82;
+            const peakAmp = 0.20 + vel * 0.24;
+            voiceGain.gain.setValueAtTime(0.0001, now);
+            voiceGain.gain.linearRampToValueAtTime(peakAmp, now + 0.005);
+            voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + upDecay);
+
+            // Honky-tonk dual detuned strings
+            [-6.5, 6.5].forEach((cents, idx) => {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = idx === 0 ? 'sawtooth' : 'triangle';
+              osc.frequency.setValueAtTime(freq, now);
+              osc.detune.setValueAtTime(cents, now);
+              g.gain.setValueAtTime(idx === 0 ? 0.26 : 0.55, now);
+              osc.connect(g).connect(filter);
+              oscNodes.push(osc);
+            });
+
+            this._triggerHammerTransient(filter, freq * 1.2, vel * 1.15, now);
+
+          } else {
+            // --- DREAMY SYNTH PAD ---
+            const baseCutoff = Math.min(6500, freq * (1.8 + vel * 3.8));
+            filter.frequency.setValueAtTime(Math.max(160, freq * 0.9), now);
+            filter.frequency.exponentialRampToValueAtTime(baseCutoff, now + 0.35);
+            filter.Q.setValueAtTime(1.8, now);
+
+            const peakAmp = 0.16 + vel * 0.16;
+            voiceGain.gain.setValueAtTime(0.0001, now);
+            voiceGain.gain.linearRampToValueAtTime(peakAmp, now + 0.18);
+            voiceGain.gain.exponentialRampToValueAtTime(peakAmp * 0.85, now + 1.5);
+            voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + 8.5);
+
+            [-9, 0, 9].forEach((cents) => {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = cents === 0 ? 'triangle' : 'sawtooth';
+              osc.frequency.setValueAtTime(freq, now);
+              osc.detune.setValueAtTime(cents, now);
+              g.gain.setValueAtTime(cents === 0 ? 0.42 : 0.22, now);
+              osc.connect(g).connect(filter);
+              oscNodes.push(osc);
+            });
+          }
+
+          filter.connect(voiceGain);
+          voiceGain.connect(panner);
+          panner.connect(this.dryGain);
+          panner.connect(this.reverbNode);
+
+          oscNodes.forEach((osc) => osc.start(now));
+
+          this.activeVoices.set(midi, {
+            oscNodes,
+            voiceGain,
+            filter,
+            panner,
+            releaseTime: this.voiceType === 'pad' ? 0.75 : 0.24
+          });
+        }
+
+        _triggerHammerTransient(destinationFilter, freq, vel, now) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(Math.min(2800, freq * 4.5 + 140), now);
+          osc.frequency.exponentialRampToValueAtTime(Math.max(65, freq * 0.8), now + 0.024);
+
+          gain.gain.setValueAtTime(0.14 * vel, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.026);
+
+          osc.connect(gain).connect(destinationFilter);
+          osc.start(now);
+          osc.stop(now + 0.03);
+        }
+
+        noteOff(midi) {
+          const voice = this.activeVoices.get(midi);
+          if (!voice) return;
+          this._stopVoice(midi, voice.releaseTime);
+        }
+
+        _stopVoice(midi, fadeSec) {
+          const voice = this.activeVoices.get(midi);
+          if (!voice || !this.ctx) return;
+          this.activeVoices.delete(midi);
+
+          const now = this.ctx.currentTime;
+          try {
+            voice.voiceGain.gain.cancelScheduledValues(now);
+            voice.voiceGain.gain.setValueAtTime(Math.max(0.0001, voice.voiceGain.gain.value), now);
+            voice.voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + fadeSec);
+          } catch (e) {
+            // Safe fallback
+          }
+
+          setTimeout(() => {
+            voice.oscNodes.forEach((osc) => {
+              try {
+                osc.stop();
+                osc.disconnect();
+              } catch (e) {}
+            });
+            try {
+              voice.filter.disconnect();
+              voice.voiceGain.disconnect();
+              voice.panner.disconnect();
+            } catch (e) {}
+          }, Math.ceil((fadeSec + 0.05) * 1000));
+        }
+
+        panicAll() {
+          for (const midi of Array.from(this.activeVoices.keys())) {
+            this._stopVoice(midi, 0.08);
+          }
+        }
+      }
+
+      const synth = new ConcertGrandSynth();
+
+      /**
+       * =========================================================================
+       * 3. REAL-TIME CHORD & INTERVAL RECOGNITION ENGINE
+       * =========================================================================
+       */
+      const CHORD_FORMULAS = [
+        // Triads
+        { intervals: [0, 4, 7], name: 'Major' },
+        { intervals: [0, 3, 7], name: 'Minor' },
+        { intervals: [0, 3, 6], name: 'dim' },
+        { intervals: [0, 4, 8], name: 'aug' },
+        { intervals: [0, 2, 7], name: 'sus2' },
+        { intervals: [0, 5, 7], name: 'sus4' },
+        // Sevenths
+        { intervals: [0, 4, 7, 10], name: '7' },
+        { intervals: [0, 4, 7, 11], name: 'maj7' },
+        { intervals: [0, 3, 7, 10], name: 'm7' },
+        { intervals: [0, 3, 7, 11], name: 'm(maj7)' },
+        { intervals: [0, 3, 6, 9],  name: 'dim7' },
+        { intervals: [0, 3, 6, 10], name: 'm7b5' },
+        { intervals: [0, 4, 8, 10], name: 'aug7' },
+        { intervals: [0, 5, 7, 10], name: '7sus4' },
+        // Sixths & Add9
+        { intervals: [0, 4, 7, 9],  name: '6' },
+        { intervals: [0, 3, 7, 9],  name: 'm6' },
+        { intervals: [0, 2, 4, 7],  name: 'add9' },
+        { intervals: [0, 2, 3, 7],  name: 'm(add9)' },
+        // Ninths
+        { intervals: [0, 2, 4, 7, 10], name: '9' },
+        { intervals: [0, 2, 4, 7, 11], name: 'maj9' },
+        { intervals: [0, 2, 3, 7, 10], name: 'm9' },
+        // Shell / Power
+        { intervals: [0, 7], name: '5 (Power)' }
+      ];
+
+      const INTERVAL_NAMES = {
+        0: 'Unison / Octave',
+        1: 'Minor 2nd',
+        2: 'Major 2nd',
+        3: 'Minor 3rd',
+        4: 'Major 3rd',
+        5: 'Perfect 4th',
+        6: 'Tritone',
+        7: 'Perfect 5th',
+        8: 'Minor 6th',
+        9: 'Major 6th',
+        10: 'Minor 7th',
+        11: 'Major 7th'
+      };
+
+      function identifyChord(sortedMidiNotes) {
+        if (sortedMidiNotes.length === 0) {
+          return 'Ready — Play Any Key';
+        }
+
+        const bassMidi = sortedMidiNotes[0];
+        const bassPitchClass = bassMidi % 12;
+        const bassName = NOTE_NAMES[bassPitchClass];
+
+        if (sortedMidiNotes.length === 1) {
+          const k = KEY_BY_MIDI.get(bassMidi);
+          return `Single Note · ${k.fullName}`;
+        }
+
+        // Extract unique pitch classes
+        const uniquePCs = Array.from(new Set(sortedMidiNotes.map((m) => m % 12)));
+
+        if (uniquePCs.length === 1) {
+          return `${bassName} Octave`;
+        }
+
+        if (uniquePCs.length === 2) {
+          const diff = (uniquePCs[1] - uniquePCs[0] + 12) % 12;
+          const lowerName = NOTE_NAMES[uniquePCs[0]];
+          return `${lowerName} · ${INTERVAL_NAMES[diff] || 'Interval'}`;
+        }
+
+        // Test every present pitch class as potential chord root (prioritizing bass note first)
+        const candidateRoots = [
+          bassPitchClass,
+          ...uniquePCs.filter((pc) => pc !== bassPitchClass)
+        ];
+
+        for (const root of candidateRoots) {
+          const normalized = uniquePCs
+            .map((pc) => (pc - root + 12) % 12)
+            .sort((a, b) => a - b);
+
+          for (const formula of CHORD_FORMULAS) {
+            if (formula.intervals.length === normalized.length &&
+                formula.intervals.every((val, idx) => val === normalized[idx])) {
+              const rootName = NOTE_NAMES[root];
+              const label = formula.name === 'Major' || formula.name === 'Minor'
+                ? `${rootName} ${formula.name}`
+                : `${rootName}${formula.name}`;
+              return root === bassPitchClass ? label : `${label} / ${bassName}`;
+            }
+          }
+        }
+
+        // Fallback for extended/cluster voicings: find closest triadic core from bass
+        for (const root of candidateRoots) {
+          const set = new Set(uniquePCs.map((pc) => (pc - root + 12) % 12));
+          const rootName = NOTE_NAMES[root];
+          if (set.has(4) && set.has(7)) {
+            const suffix = set.has(11) ? 'maj7+' : set.has(10) ? '7+' : ' Major+';
+            return root === bassPitchClass ? `${rootName}${suffix}` : `${rootName}${suffix} / ${bassName}`;
+          }
+          if (set.has(3) && set.has(7)) {
+            const suffix = set.has(10) ? 'm7+' : ' Minor+';
+            return root === bassPitchClass ? `${rootName}${suffix}` : `${rootName}${suffix} / ${bassName}`;
+          }
+        }
+
+        return `${uniquePCs.map((pc) => NOTE_NAMES[pc]).join('-')} Voicing`;
+      }
+
+      /**
+       * =========================================================================
+       * 4. APPLICATION STATE & QWERTY KEYBOARD MAPPING
+       * =========================================================================
+       */
+      const state = {
+        whiteKeyWidth: window.innerWidth < 640 ? 40 : 46,
+        sustainPedal: false,
+        spaceSustainHeld: false,
+        showNoteLabels: true,
+        showQwertyHints: true,
+        qwertyBaseOctave: 4, // C4 to F5 default
+        physicallyHeld: new Map(), // midi -> Set of source tags ('ptr:1', 'kbd:KeyA', 'demo')
+        sustainedNotes: new Set(), // midi currently ringing via sustain pedal
+        lastVelocity: null,
+        demoPlaying: false,
+        demoTimeouts: []
+      };
+
+      // Two full octaves mapped to standard QWERTY keys
+      const QWERTY_MAP = [
+        { code: 'KeyA',      label: 'A', offset: 0 },  // C
+        { code: 'KeyW',      label: 'W', offset: 1 },  // C#
+        { code: 'KeyS',      label: 'S', offset: 2 },  // D
+        { code: 'KeyE',      label: 'E', offset: 3 },  // D#
+        { code: 'KeyD',      label: 'D', offset: 4 },  // E
+        { code: 'KeyF',      label: 'F', offset: 5 },  // F
+        { code: 'KeyT',      label: 'T', offset: 6 },  // F#
+        { code: 'KeyG',      label: 'G', offset: 7 },  // G
+        { code: 'KeyY',      label: 'Y', offset: 8 },  // G#
+        { code: 'KeyH',      label: 'H', offset: 9 },  // A
+        { code: 'KeyU',      label: 'U', offset: 10 }, // A#
+        { code: 'KeyJ',      label: 'J', offset: 11 }, // B
+        { code: 'KeyK',      label: 'K', offset: 12 }, // C+1
+        { code: 'KeyO',      label: 'O', offset: 13 }, // C#+1
+        { code: 'KeyL',      label: 'L', offset: 14 }, // D+1
+        { code: 'KeyP',      label: 'P', offset: 15 }, // D#+1
+        { code: 'Semicolon', label: ';', offset: 16 }, // E+1
+        { code: 'Quote',     label: "'", offset: 17 }  // F+1
+      ];
+
+      const QWERTY_BY_CODE = new Map(QWERTY_MAP.map((item) => [item.code, item]));
+
+      /**
+       * =========================================================================
+       * 5. DOM REFERENCES & KEYBOARD / MINI-MAP RENDERING
+       * =========================================================================
+       */
+      const scrollContainer = document.getElementById('piano-scroll-container');
+      const keysTrack = document.getElementById('piano-keys-track');
+      const minimapTrack = document.getElementById('minimap-track');
+      const minimapViewport = document.getElementById('minimap-viewport');
+
+      const oledChord = document.getElementById('oled-chord');
+      const oledNotes = document.getElementById('oled-notes');
+      const oledFreq = document.getElementById('oled-freq');
+      const oledVelocity = document.getElementById('oled-velocity');
+      const oledVoiceTag = document.getElementById('oled-voice-tag');
+
+      const voiceSelect = document.getElementById('voice-select');
+      const btnSustain = document.getElementById('btn-sustain');
+      const sustainLed = document.getElementById('sustain-led');
+      const btnToggleNotes = document.getElementById('btn-toggle-notes');
+      const btnToggleQwerty = document.getElementById('btn-toggle-qwerty');
+      const btnOctDown = document.getElementById('btn-oct-down');
+      const btnOctUp = document.getElementById('btn-oct-up');
+      const qwertyOctLabel = document.getElementById('qwerty-oct-label');
+      const volumeSlider = document.getElementById('volume-slider');
+
+      const songSelect = document.getElementById('song-select');
+      const btnDemoPlay = document.getElementById('btn-demo-play');
+      const demoBtnIcon = document.getElementById('demo-btn-icon');
+      const demoBtnText = document.getElementById('demo-btn-text');
+
+      function buildKeyboardAndMinimap() {
+        const keysFrag = document.createDocumentFragment();
+        const miniFrag = document.createDocumentFragment();
+
+        const miniWhitePct = 100 / TOTAL_WHITE_KEYS;
+        const miniBlackPct = miniWhitePct * 0.62;
+
+        PIANO_KEYS.forEach((k) => {
+          // 1. Main Piano Key DOM Element
+          const keyEl = document.createElement('div');
+          keyEl.dataset.midi = String(k.midi);
+          keyEl.className = k.isBlack ? 'black-key' : 'white-key';
+          if (k.isMiddleC) {
+            keyEl.classList.add('is-middle-c');
+          }
+
+          // QWERTY Keycap Badge (populated by updateQwertyBadges)
+          const qwertyBadge = document.createElement('span');
+          qwertyBadge.className = 'qwerty-badge hidden';
+          keyEl.appendChild(qwertyBadge);
+
+          // Gold Middle C indicator dot
+          if (k.isMiddleC) {
+            const dot = document.createElement('span');
+            dot.className = 'middle-c-dot';
+            dot.title = 'Middle C (C4 - 261.63 Hz)';
+            keyEl.appendChild(dot);
+          }
+
+          // Note Name Label (e.g., C4, F#4)
+          const label = document.createElement('span');
+          label.className = 'note-label';
+          label.textContent = k.fullName;
+          keyEl.appendChild(label);
+
+          k.el = keyEl;
+          k.qwertyEl = qwertyBadge;
+          keysFrag.appendChild(keyEl);
+
+          // 2. Mini-Map Key DOM Element
+          const miniEl = document.createElement('div');
+          miniEl.className = k.isBlack ? 'minimap-black' : 'minimap-white';
+          if (k.isMiddleC) {
+            miniEl.classList.add('is-middle-c');
+          }
+
+          if (k.isBlack) {
+            const leftPct = (k.whiteIndex + 1 + k.blackOffset) * miniWhitePct - miniBlackPct * 0.5;
+            miniEl.style.left = `${leftPct}%`;
+            miniEl.style.width = `${miniBlackPct}%`;
+          } else {
+            miniEl.style.left = `${k.whiteIndex * miniWhitePct}%`;
+            miniEl.style.width = `${miniWhitePct}%`;
+          }
+
+          k.miniEl = miniEl;
+          miniFrag.appendChild(miniEl);
+        });
+
+        keysTrack.appendChild(keysFrag);
+        minimapTrack.appendChild(miniFrag);
+
+        applyKeyGeometry();
+        updateQwertyBadges();
+      }
+
+      function applyKeyGeometry() {
+        const w = state.whiteKeyWidth;
+        const b = Math.round(w * 0.61);
+
+        document.documentElement.style.setProperty('--white-key-w', `${w}px`);
+        document.documentElement.style.setProperty('--black-key-w', `${b}px`);
+        keysTrack.style.width = `${TOTAL_WHITE_KEYS * w}px`;
+
+        PIANO_KEYS.forEach((k) => {
+          if (k.isBlack) {
+            const leftPx = (k.whiteIndex + 1 + k.blackOffset) * w - b * 0.5;
+            k.el.style.left = `${leftPx}px`;
+          } else {
+            k.el.style.left = `${k.whiteIndex * w}px`;
+          }
+        });
+
+        updateMinimapViewport();
+      }
+
+      function updateQwertyBadges() {
+        PIANO_KEYS.forEach((k) => {
+          k.qwertyEl.textContent = '';
+          k.qwertyEl.classList.add('hidden');
+        });
+
+        const baseMidi = (state.qwertyBaseOctave + 1) * 12; // C of baseOctave
+        QWERTY_MAP.forEach((item) => {
+          const targetMidi = baseMidi + item.offset;
+          const k = KEY_BY_MIDI.get(targetMidi);
+          if (k) {
+            k.qwertyEl.textContent = item.label;
+            k.qwertyEl.classList.remove('hidden');
+          }
+        });
+
+        const lowName = `C${state.qwertyBaseOctave}`;
+        const highName = `F${state.qwertyBaseOctave + 1}`;
+        qwertyOctLabel.textContent = `${lowName}–${highName}`;
+      }
+
+      /**
+       * =========================================================================
+       * 6. NOTE TRIGGERING, SUSTAIN PEDAL & OLED DISPLAY UPDATES
+       * =========================================================================
+       */
+      function pressNote(midi, sourceTag, velocity = 0.82) {
+        const k = KEY_BY_MIDI.get(midi);
+        if (!k) return;
+
+        let sources = state.physicallyHeld.get(midi);
+        if (!sources) {
+          sources = new Set();
+          state.physicallyHeld.set(midi, sources);
+        }
+
+        const wasAlreadyHeld = sources.size > 0;
+        sources.add(sourceTag);
+
+        if (!wasAlreadyHeld) {
+          state.sustainedNotes.delete(midi);
+          state.lastVelocity = Math.round(velocity * 127);
+          synth.noteOn(midi, velocity);
+
+          k.el.classList.add('is-active');
+          k.el.classList.remove('is-sustained');
+          k.miniEl.classList.add('is-active');
+          updateOLED();
+        }
+      }
+
+      function releaseNote(midi, sourceTag) {
+        const k = KEY_BY_MIDI.get(midi);
+        if (!k) return;
+
+        const sources = state.physicallyHeld.get(midi);
+        if (sources) {
+          sources.delete(sourceTag);
+          if (sources.size > 0) return; // Still held by another finger/key
+          state.physicallyHeld.delete(midi);
+        }
+
+        k.el.classList.remove('is-active');
+        k.miniEl.classList.remove('is-active');
+
+        const isSustainOn = state.sustainPedal || state.spaceSustainHeld;
+        if (isSustainOn) {
+          state.sustainedNotes.add(midi);
+          k.el.classList.add('is-sustained');
+        } else {
+          state.sustainedNotes.delete(midi);
+          k.el.classList.remove('is-sustained');
+          synth.noteOff(midi);
+        }
+
+        updateOLED();
+      }
+
+      function releaseAllBySourcePrefix(prefix) {
+        for (const [midi, sources] of Array.from(state.physicallyHeld.entries())) {
+          for (const tag of Array.from(sources)) {
+            if (tag.startsWith(prefix)) {
+              releaseNote(midi, tag);
+            }
+          }
+        }
+      }
+
+      function syncSustainState() {
+        const active = state.sustainPedal || state.spaceSustainHeld;
+        btnSustain.classList.toggle('sustain-active', active);
+        sustainLed.className = active
+          ? 'w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]'
+          : 'w-2 h-2 rounded-full bg-slate-500';
+
+        // If sustain was just released, damp all sustained notes not currently physically held
+        if (!active) {
+          for (const midi of Array.from(state.sustainedNotes)) {
+            if (!state.physicallyHeld.has(midi)) {
+              state.sustainedNotes.delete(midi);
+              const k = KEY_BY_MIDI.get(midi);
+              if (k) k.el.classList.remove('is-sustained');
+              synth.noteOff(midi);
+            }
+          }
+          updateOLED();
+        }
+      }
+
+      function updateOLED() {
+        // Combine physically held notes and sustained notes
+        const soundingSet = new Set([
+          ...state.physicallyHeld.keys(),
+          ...state.sustainedNotes.keys()
+        ]);
+        const sortedMidis = Array.from(soundingSet).sort((a, b) => a - b);
+
+        if (sortedMidis.length === 0) {
+          oledChord.textContent = 'Ready — Play Any Key';
+          oledNotes.textContent = '88 Keys Active (52 White · 36 Black)';
+          oledFreq.textContent = '440.00 Hz';
+          oledVelocity.textContent = state.lastVelocity ? `LAST VEL: ${state.lastVelocity}` : 'VEL: —';
+          return;
+        }
+
+        oledChord.textContent = identifyChord(sortedMidis);
+
+        const noteLabels = sortedMidis.map((m) => KEY_BY_MIDI.get(m).fullName);
+        oledNotes.textContent = noteLabels.join(' · ');
+
+        // Display frequency of highest active melody note (or single note)
+        const focusMidi = sortedMidis[sortedMidis.length - 1];
+        const focusKey = KEY_BY_MIDI.get(focusMidi);
+        oledFreq.textContent = `${focusKey.freq.toFixed(2)} Hz`;
+        oledVelocity.textContent = `VEL: ${state.lastVelocity || 104}`;
+      }
+
+      /**
+       * =========================================================================
+       * 7. POINTER GLISSANDO & MULTI-TOUCH HANDLERS
+       * =========================================================================
+       */
+      const activePointers = new Map(); // pointerId -> current midi
+
+      function computeClickVelocity(keyEl, clientY) {
+        const rect = keyEl.getBoundingClientRect();
+        if (!rect.height) return 0.82;
+        const relY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+        // Higher velocity near the front lip of the key, softer near the fallboard
+        return 0.32 + relY * 0.68;
+      }
+
+      keysTrack.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
+        const keyEl = e.target.closest('[data-midi]');
+        if (!keyEl) return;
+
+        e.preventDefault();
+        if (state.demoPlaying) stopDemoSong();
+
+        try {
+          keysTrack.setPointerCapture(e.pointerId);
+        } catch (err) {}
+
+        const midi = parseInt(keyEl.dataset.midi, 10);
+        const vel = computeClickVelocity(keyEl, e.clientY);
+        activePointers.set(e.pointerId, midi);
+        pressNote(midi, `ptr:${e.pointerId}`, vel);
+      });
+
+      keysTrack.addEventListener('pointermove', (e) => {
+        if (!activePointers.has(e.pointerId)) return;
+        e.preventDefault();
+
+        const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+        const keyEl = elUnder ? elUnder.closest('[data-midi]') : null;
+        const prevMidi = activePointers.get(e.pointerId);
+
+        if (!keyEl) {
+          if (prevMidi !== null) {
+            releaseNote(prevMidi, `ptr:${e.pointerId}`);
+            activePointers.set(e.pointerId, null);
+          }
+          return;
+        }
+
+        const nextMidi = parseInt(keyEl.dataset.midi, 10);
+        if (nextMidi !== prevMidi) {
+          if (prevMidi !== null) {
+            releaseNote(prevMidi, `ptr:${e.pointerId}`);
+          }
+          const vel = computeClickVelocity(keyEl, e.clientY);
+          activePointers.set(e.pointerId, nextMidi);
+          pressNote(nextMidi, `ptr:${e.pointerId}`, vel);
+        }
+      });
+
+      function handlePointerEnd(e) {
+        if (!activePointers.has(e.pointerId)) return;
+        const midi = activePointers.get(e.pointerId);
+        activePointers.delete(e.pointerId);
+        if (midi !== null) {
+          releaseNote(midi, `ptr:${e.pointerId}`);
+        }
+      }
+
+      keysTrack.addEventListener('pointerup', handlePointerEnd);
+      keysTrack.addEventListener('pointercancel', handlePointerEnd);
+
+      /**
+       * =========================================================================
+       * 8. QWERTY COMPUTER KEYBOARD PLAYABILITY
+       * =========================================================================
+       */
+      window.addEventListener('keydown', (e) => {
+        if (e.target && (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT')) {
+          return;
+        }
+        if (e.repeat) return;
+
+        // Sustain Pedal via Spacebar
+        if (e.code === 'Space') {
+          e.preventDefault();
+          synth.init();
+          state.spaceSustainHeld = true;
+          syncSustainState();
+          return;
+        }
+
+        // Octave Shift Down (Z) / Up (X)
+        if (e.code === 'KeyZ') {
+          shiftQwertyOctave(-1);
+          return;
+        }
+        if (e.code === 'KeyX') {
+          shiftQwertyOctave(1);
+          return;
+        }
+
+        const mapping = QWERTY_BY_CODE.get(e.code);
+        if (mapping) {
+          e.preventDefault();
+          if (state.demoPlaying) stopDemoSong();
+          const midi = (state.qwertyBaseOctave + 1) * 12 + mapping.offset;
+          const humanVel = 0.78 + Math.random() * 0.14;
+          pressNote(midi, `kbd:${e.code}`, humanVel);
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') {
+          state.spaceSustainHeld = false;
+          syncSustainState();
+          return;
+        }
+
+        const mapping = QWERTY_BY_CODE.get(e.code);
+        if (mapping) {
+          releaseAllBySourcePrefix(`kbd:${e.code}`);
+        }
+      });
+
+      function shiftQwertyOctave(delta) {
+        const next = Math.max(1, Math.min(6, state.qwertyBaseOctave + delta));
+        if (next === state.qwertyBaseOctave) return;
+        releaseAllBySourcePrefix('kbd:');
+        state.qwertyBaseOctave = next;
+        updateQwertyBadges();
+        // Smoothly scroll keyboard so the active QWERTY octave is visible
+        const centerMidi = (state.qwertyBaseOctave + 1) * 12 + 7;
+        scrollToMidi(centerMidi, true);
+      }
+
+      /**
+       * =========================================================================
+       * 9. 88-KEY MINI-MAP VIEWPORT & SMOOTH SCROLL NAVIGATION
+       * =========================================================================
+       */
+      function updateMinimapViewport() {
+        const totalW = keysTrack.offsetWidth || (TOTAL_WHITE_KEYS * state.whiteKeyWidth);
+        const viewW = scrollContainer.clientWidth;
+        const scrollL = scrollContainer.scrollLeft;
+
+        const leftPct = Math.max(0, Math.min(100, (scrollL / totalW) * 100));
+        const widthPct = Math.max(6, Math.min(100 - leftPct, (viewW / totalW) * 100));
+
+        minimapViewport.style.left = `${leftPct}%`;
+        minimapViewport.style.width = `${widthPct}%`;
+      }
+
+      scrollContainer.addEventListener('scroll', updateMinimapViewport, { passive: true });
+      window.addEventListener('resize', updateMinimapViewport);
+
+      function scrollToMidi(midi, smooth = true) {
+        const k = KEY_BY_MIDI.get(midi);
+        if (!k || !k.el) return;
+        const keyCenter = k.el.offsetLeft + k.el.offsetWidth * 0.5;
+        const targetScroll = Math.max(0, keyCenter - scrollContainer.clientWidth * 0.5);
+        scrollContainer.scrollTo({
+          left: targetScroll,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+      }
+
+      // Dragging / Clicking on the 88-Key Mini-Map
+      let isDraggingMinimap = false;
+      let dragOffsetRatio = 0.5;
+
+      function seekFromMinimapClientX(clientX, useOffset = false) {
+        const rect = minimapTrack.getBoundingClientRect();
+        const totalW = keysTrack.offsetWidth;
+        const viewW = scrollContainer.clientWidth;
+
+        let clickRatio = (clientX - rect.left) / rect.width;
+        if (useOffset) {
+          clickRatio -= dragOffsetRatio;
+        } else {
+          clickRatio -= (viewW / totalW) * 0.5;
+        }
+
+        const maxScroll = Math.max(0, totalW - viewW);
+        scrollContainer.scrollLeft = Math.max(0, Math.min(maxScroll, clickRatio * totalW));
+        updateMinimapViewport();
+      }
+
+      minimapTrack.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        isDraggingMinimap = true;
+        try {
+          minimapTrack.setPointerCapture(e.pointerId);
+        } catch (err) {}
+
+        const rect = minimapTrack.getBoundingClientRect();
+        const vpRect = minimapViewport.getBoundingClientRect();
+
+        if (e.clientX >= vpRect.left && e.clientX <= vpRect.right) {
+          dragOffsetRatio = (e.clientX - vpRect.left) / rect.width;
+          seekFromMinimapClientX(e.clientX, true);
+        } else {
+          dragOffsetRatio = (vpRect.width * 0.5) / rect.width;
+          seekFromMinimapClientX(e.clientX, false);
+        }
+      });
+
+      minimapTrack.addEventListener('pointermove', (e) => {
+        if (!isDraggingMinimap) return;
+        e.preventDefault();
+        seekFromMinimapClientX(e.clientX, true);
+      });
+
+      minimapTrack.addEventListener('pointerup', () => {
+        isDraggingMinimap = false;
+      });
+      minimapTrack.addEventListener('pointercancel', () => {
+        isDraggingMinimap = false;
+      });
+
+      /**
+       * =========================================================================
+       * 10. BUILT-IN CLASSICAL & 88-KEY DEMO SONG PLAYER
+       * =========================================================================
+       */
+      function buildDemoSongs() {
+        // Chromatic 88-Key Sweep from A0 (21) to C8 (108) and resolving chord
+        const chromaticEvents = [];
+        let t = 0;
+        for (let m = 21; m <= 108; m++) {
+          chromaticEvents.push({
+            t,
+            dur: 0.14,
+            midi: m,
+            vel: 0.65 + ((m - 21) / 87) * 0.25,
+            follow: m % 4 === 0 || m === 21 || m === 108
+          });
+          t += 0.065;
+        }
+        // Grand C Major arpeggiated finale
+        [36, 48, 60, 64, 67, 72, 76, 79, 84].forEach((m, i) => {
+          chromaticEvents.push({ t: t + 0.15 + i * 0.05, dur: 1.4, midi: m, vel: 0.85, follow: i === 4 });
+        });
+
+        return {
+          furElise: [
+            // Iconic A minor opening + left-hand broken chords
+            { t: 0.00, dur: 0.22, midi: 76, vel: 0.78, follow: true },
+            { t: 0.22, dur: 0.22, midi: 75, vel: 0.74 },
+            { t: 0.44, dur: 0.22, midi: 76, vel: 0.80 },
+            { t: 0.66, dur: 0.22, midi: 75, vel: 0.74 },
+            { t: 0.88, dur: 0.22, midi: 76, vel: 0.82 },
+            { t: 1.10, dur: 0.22, midi: 71, vel: 0.75 },
+            { t: 1.32, dur: 0.22, midi: 74, vel: 0.78 },
+            { t: 1.54, dur: 0.22, midi: 72, vel: 0.76 },
+            // Am bass + melody A4
+            { t: 1.76, dur: 0.62, midi: 69, vel: 0.85, follow: true },
+            { t: 1.76, dur: 0.62, midi: 45, vel: 0.62 },
+            { t: 1.98, dur: 0.40, midi: 52, vel: 0.56 },
+            { t: 2.20, dur: 0.22, midi: 57, vel: 0.58 },
+            { t: 2.42, dur: 0.22, midi: 60, vel: 0.72 },
+            { t: 2.64, dur: 0.22, midi: 64, vel: 0.76 },
+            { t: 2.86, dur: 0.22, midi: 69, vel: 0.80 },
+            // E major cadence
+            { t: 3.08, dur: 0.62, midi: 71, vel: 0.84, follow: true },
+            { t: 3.08, dur: 0.62, midi: 40, vel: 0.62 },
+            { t: 3.30, dur: 0.40, midi: 52, vel: 0.56 },
+            { t: 3.52, dur: 0.22, midi: 56, vel: 0.60 },
+            { t: 3.74, dur: 0.22, midi: 64, vel: 0.74 },
+            { t: 3.96, dur: 0.22, midi: 68, vel: 0.76 },
+            { t: 4.18, dur: 0.22, midi: 71, vel: 0.80 },
+            // Return to Am
+            { t: 4.40, dur: 0.65, midi: 72, vel: 0.86, follow: true },
+            { t: 4.40, dur: 0.65, midi: 45, vel: 0.64 },
+            { t: 4.62, dur: 0.42, midi: 52, vel: 0.56 },
+            { t: 4.84, dur: 0.24, midi: 57, vel: 0.60 },
+            { t: 5.06, dur: 0.22, midi: 64, vel: 0.72 },
+            // Repeat phrase
+            { t: 5.28, dur: 0.22, midi: 76, vel: 0.80 },
+            { t: 5.50, dur: 0.22, midi: 75, vel: 0.74 },
+            { t: 5.72, dur: 0.22, midi: 76, vel: 0.82 },
+            { t: 5.94, dur: 0.22, midi: 75, vel: 0.74 },
+            { t: 6.16, dur: 0.22, midi: 76, vel: 0.82 },
+            { t: 6.38, dur: 0.22, midi: 71, vel: 0.76 },
+            { t: 6.60, dur: 0.22, midi: 74, vel: 0.78 },
+            { t: 6.82, dur: 0.22, midi: 72, vel: 0.76 },
+            { t: 7.04, dur: 1.15, midi: 69, vel: 0.86, follow: true },
+            { t: 7.04, dur: 1.15, midi: 45, vel: 0.65 },
+            { t: 7.26, dur: 0.90, midi: 52, vel: 0.58 },
+            { t: 7.48, dur: 0.70, midi: 57, vel: 0.60 },
+            { t: 7.70, dur: 0.55, midi: 60, vel: 0.64 }
+          ],
+
+          moonlight: [
+            // C# minor Adagio triplets + deep bass octaves
+            { t: 0.0, dur: 2.1, midi: 37, vel: 0.66, follow: true },
+            { t: 0.0, dur: 2.1, midi: 49, vel: 0.62 },
+            { t: 0.0, dur: 0.34, midi: 56, vel: 0.52 },
+            { t: 0.35, dur: 0.34, midi: 61, vel: 0.56 },
+            { t: 0.70, dur: 0.34, midi: 64, vel: 0.60 },
+            { t: 1.05, dur: 0.34, midi: 56, vel: 0.52 },
+            { t: 1.40, dur: 0.34, midi: 61, vel: 0.56 },
+            { t: 1.75, dur: 0.34, midi: 64, vel: 0.62 },
+
+            // Bass B1/B2
+            { t: 2.15, dur: 2.1, midi: 35, vel: 0.65 },
+            { t: 2.15, dur: 2.1, midi: 47, vel: 0.60 },
+            { t: 2.15, dur: 0.34, midi: 56, vel: 0.52 },
+            { t: 2.50, dur: 0.34, midi: 61, vel: 0.56 },
+            { t: 2.85, dur: 0.34, midi: 64, vel: 0.60 },
+            { t: 3.20, dur: 0.34, midi: 56, vel: 0.52 },
+            { t: 3.55, dur: 0.34, midi: 61, vel: 0.56 },
+            { t: 3.90, dur: 0.34, midi: 64, vel: 0.62 },
+
+            // A major / F#m6 color + singing G#4 melody entry
+            { t: 4.30, dur: 2.1, midi: 33, vel: 0.66, follow: true },
+            { t: 4.30, dur: 2.1, midi: 45, vel: 0.60 },
+            { t: 4.30, dur: 0.34, midi: 57, vel: 0.54 },
+            { t: 4.65, dur: 0.34, midi: 61, vel: 0.58 },
+            { t: 5.00, dur: 0.34, midi: 64, vel: 0.62 },
+            { t: 5.35, dur: 1.05, midi: 68, vel: 0.80 },
+            { t: 5.35, dur: 0.34, midi: 57, vel: 0.52 },
+            { t: 5.70, dur: 0.34, midi: 62, vel: 0.56 },
+            { t: 6.05, dur: 0.34, midi: 66, vel: 0.60 },
+
+            // Resolve to C# minor
+            { t: 6.45, dur: 1.6, midi: 37, vel: 0.68, follow: true },
+            { t: 6.45, dur: 1.6, midi: 49, vel: 0.62 },
+            { t: 6.45, dur: 1.6, midi: 56, vel: 0.58 },
+            { t: 6.45, dur: 1.6, midi: 61, vel: 0.64 },
+            { t: 6.45, dur: 1.6, midi: 68, vel: 0.82 }
+          ],
+
+          odeToJoy: [
+            // Bar 1: C Major
+            { t: 0.00, dur: 0.36, midi: 64, vel: 0.82, follow: true },
+            { t: 0.00, dur: 1.40, midi: 48, vel: 0.64 },
+            { t: 0.00, dur: 1.40, midi: 55, vel: 0.58 },
+            { t: 0.38, dur: 0.36, midi: 64, vel: 0.80 },
+            { t: 0.76, dur: 0.36, midi: 65, vel: 0.82 },
+            { t: 1.14, dur: 0.36, midi: 67, vel: 0.85 },
+            // Bar 2: G Major
+            { t: 1.52, dur: 0.36, midi: 67, vel: 0.85 },
+            { t: 1.52, dur: 1.40, midi: 43, vel: 0.64 },
+            { t: 1.52, dur: 1.40, midi: 55, vel: 0.58 },
+            { t: 1.90, dur: 0.36, midi: 65, vel: 0.80 },
+            { t: 2.28, dur: 0.36, midi: 64, vel: 0.78 },
+            { t: 2.66, dur: 0.36, midi: 62, vel: 0.76 },
+            // Bar 3: C Major
+            { t: 3.04, dur: 0.36, midi: 60, vel: 0.80, follow: true },
+            { t: 3.04, dur: 1.40, midi: 48, vel: 0.64 },
+            { t: 3.04, dur: 1.40, midi: 52, vel: 0.58 },
+            { t: 3.42, dur: 0.36, midi: 60, vel: 0.78 },
+            { t: 3.80, dur: 0.36, midi: 62, vel: 0.80 },
+            { t: 4.18, dur: 0.36, midi: 64, vel: 0.84 },
+            // Bar 4: Cadence on G -> C
+            { t: 4.56, dur: 0.54, midi: 64, vel: 0.86 },
+            { t: 4.56, dur: 1.45, midi: 43, vel: 0.65 },
+            { t: 4.56, dur: 1.45, midi: 55, vel: 0.60 },
+            { t: 5.12, dur: 0.20, midi: 62, vel: 0.76 },
+            { t: 5.34, dur: 1.15, midi: 62, vel: 0.82 },
+            { t: 6.55, dur: 1.40, midi: 60, vel: 0.88, follow: true },
+            { t: 6.55, dur: 1.40, midi: 48, vel: 0.68 },
+            { t: 6.55, dur: 1.40, midi: 52, vel: 0.60 },
+            { t: 6.55, dur: 1.40, midi: 55, vel: 0.60 }
+          ],
+
+          chromatic88: chromaticEvents
+        };
+      }
+
+      const DEMO_SONGS = buildDemoSongs();
+
+      function startDemoSong() {
+        stopDemoSong();
+        synth.init();
+
+        const songKey = songSelect.value;
+        const events = DEMO_SONGS[songKey] || DEMO_SONGS.furElise;
+
+        state.demoPlaying = true;
+        demoBtnIcon.textContent = '■';
+        demoBtnText.textContent = 'Stop';
+
+        let maxEndSec = 0;
+
+        events.forEach((ev, idx) => {
+          const sourceTag = `demo:${idx}`;
+          const startId = setTimeout(() => {
+            if (!state.demoPlaying) return;
+            if (ev.follow) {
+              scrollToMidi(ev.midi, true);
+            }
+            pressNote(ev.midi, sourceTag, ev.vel || 0.8);
+          }, ev.t * 1000);
+
+          const endId = setTimeout(() => {
+            releaseNote(ev.midi, sourceTag);
+          }, (ev.t + ev.dur) * 1000);
+
+          state.demoTimeouts.push(startId, endId);
+          maxEndSec = Math.max(maxEndSec, ev.t + ev.dur);
+        });
+
+        const finishId = setTimeout(() => {
+          stopDemoSong();
+        }, (maxEndSec + 0.35) * 1000);
+        state.demoTimeouts.push(finishId);
+      }
+
+      function stopDemoSong() {
+        state.demoTimeouts.forEach((id) => clearTimeout(id));
+        state.demoTimeouts = [];
+        state.demoPlaying = false;
+        releaseAllBySourcePrefix('demo:');
+        demoBtnIcon.textContent = '▶';
+        demoBtnText.textContent = 'Play';
+      }
+
+      /**
+       * =========================================================================
+       * 11. CONSOLE CONTROLS & WINDOW LIFECYCLE BINDINGS
+       * =========================================================================
+       */
+      voiceSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        synth.setVoice(val);
+        const label = e.target.options[e.target.selectedIndex].text.toUpperCase();
+        oledVoiceTag.textContent = `• ${label}`;
+      });
+
+      btnSustain.addEventListener('click', () => {
+        synth.init();
+        state.sustainPedal = !state.sustainPedal;
+        syncSustainState();
+      });
+
+      btnToggleNotes.addEventListener('click', () => {
+        state.showNoteLabels = !state.showNoteLabels;
+        btnToggleNotes.classList.toggle('toggle-active', state.showNoteLabels);
+        keysTrack.classList.toggle('hide-note-labels', !state.showNoteLabels);
+      });
+
+      btnToggleQwerty.addEventListener('click', () => {
+        state.showQwertyHints = !state.showQwertyHints;
+        btnToggleQwerty.classList.toggle('toggle-active', state.showQwertyHints);
+        keysTrack.classList.toggle('hide-qwerty-labels', !state.showQwertyHints);
+      });
+
+      btnOctDown.addEventListener('click', () => shiftQwertyOctave(-1));
+      btnOctUp.addEventListener('click', () => shiftQwertyOctave(1));
+
+      volumeSlider.addEventListener('input', (e) => {
+        synth.setVolume(parseInt(e.target.value, 10) / 100);
+      });
+
+      btnDemoPlay.addEventListener('click', () => {
+        if (state.demoPlaying) {
+          stopDemoSong();
+        } else {
+          startDemoSong();
+        }
+      });
+
+      songSelect.addEventListener('change', () => {
+        if (state.demoPlaying) {
+          startDemoSong();
+        }
+      });
+
+      // Quick Register Jump Buttons
+      document.getElementById('jump-bass').addEventListener('click', () => scrollToMidi(21, true));
+      document.getElementById('jump-mid').addEventListener('click', () => scrollToMidi(60, true));
+      document.getElementById('jump-treble').addEventListener('click', () => scrollToMidi(108, true));
+
+      // Key Width Zoom Buttons
+      document.getElementById('btn-zoom-out').addEventListener('click', () => {
+        state.whiteKeyWidth = Math.max(28, state.whiteKeyWidth - 6);
+        applyKeyGeometry();
+      });
+      document.getElementById('btn-zoom-in').addEventListener('click', () => {
+        state.whiteKeyWidth = Math.min(68, state.whiteKeyWidth + 6);
+        applyKeyGeometry();
+      });
+
+      // Prevent stuck notes when switching browser tabs or losing window focus
+      window.addEventListener('blur', () => {
+        stopDemoSong();
+        state.spaceSustainHeld = false;
+        activePointers.clear();
+        state.physicallyHeld.clear();
+        state.sustainedNotes.clear();
+        PIANO_KEYS.forEach((k) => {
+          k.el.classList.remove('is-active', 'is-sustained');
+          k.miniEl.classList.remove('is-active');
+        });
+        syncSustainState();
+        synth.panicAll();
+        updateOLED();
+      });
+
+      /**
+       * =========================================================================
+       * 12. INITIALIZE ON WINDOW LOAD
+       * =========================================================================
+       */
+      window.onload = function () {
+        buildKeyboardAndMinimap();
+        // Center viewport comfortably on Middle C (C4) upon load
+        requestAnimationFrame(() => {
+          scrollToMidi(60, false);
+          updateMinimapViewport();
+        });
+      };
+    })();
+  </script>
+</body>
+</html>
